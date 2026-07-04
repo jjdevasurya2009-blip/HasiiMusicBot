@@ -43,8 +43,13 @@ logging.getLogger('pyrogram.dispatcher').addFilter(PyTgCallsErrorFilter())
 class TgCall(PyTgCalls):
     def __init__(self):
         self.clients = []
-        self._play_next_locks = {}  # Lock to prevent concurrent play_next calls per chat
+        self._chat_locks = {}  # Unified lock to prevent concurrent playback mutations per chat
         self._stream_end_cache = {}  # Cache to prevent duplicate stream end processing
+
+    def get_lock(self, chat_id: int) -> asyncio.Lock:
+        if chat_id not in self._chat_locks:
+            self._chat_locks[chat_id] = asyncio.Lock()
+        return self._chat_locks[chat_id]
 
     async def _edit_media_with_retry(self, message: Message, media_obj: InputMediaPhoto, reply_markup):
         """Edit media with basic FloodWait handling."""
@@ -120,6 +125,10 @@ class TgCall(PyTgCalls):
             return False
 
     async def stop(self, chat_id: int) -> None:
+        async with self.get_lock(chat_id):
+            await self._stop_impl(chat_id)
+
+    async def _stop_impl(self, chat_id: int) -> None:
         client = await db.get_assistant(chat_id)
 
         # Cancel any active preload tasks when stopping
@@ -155,6 +164,19 @@ class TgCall(PyTgCalls):
                 logger.warning(f"Error leaving call for {chat_id}: {e}")
 
     async def play_media(
+        self,
+        chat_id: int,
+        message: Message | None,
+        media: Media | Track,
+        seek_time: int = 0,
+        message_chat_id: int = None,
+    ) -> None:
+        async with self.get_lock(chat_id):
+            await self._play_media_impl(
+                chat_id, message, media, seek_time, message_chat_id
+            )
+
+    async def _play_media_impl(
         self,
         chat_id: int,
         message: Message | None,
@@ -271,15 +293,14 @@ class TgCall(PyTgCalls):
         )
 
         try:
-            call = await db.get_call(chat_id)
-            if call:
-                logger.debug(
-                    f"Already connected to {chat_id}, leaving before reconnecting...")
-                await client.leave_call(chat_id, close=False)
+            # ALWAYS attempt to leave the call before starting a new stream to clear ghost streams
+            # even if db.get_call says False, because PyTgCalls might be out of sync
+            await client.leave_call(chat_id, close=False)
+            await asyncio.sleep(0.3)  # Small delay to let PyTgCalls process the leave
         except (ConnectionNotFound, exceptions.NotInCallError):
             pass
         except Exception as e:
-            logger.debug(f"Error checking connection state for {chat_id}: {e}")
+            logger.debug(f"Error leaving call for ghost stream prevention in {chat_id}: {e}")
 
         max_retries = 3
         retry_delay = 1
@@ -388,9 +409,9 @@ class TgCall(PyTgCalls):
                     await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
                 except Exception:
                     pass
-            await self.play_next(chat_id)
+            await self._play_next_impl(chat_id)
         except exceptions.NoActiveGroupCall:
-            await self.stop(chat_id)
+            await self._stop_impl(chat_id)
             if message:
                 try:
                     await message.edit_text(_lang["error_vc_disabled"])
@@ -400,14 +421,14 @@ class TgCall(PyTgCalls):
             error_str = str(e)
 
             if any(x in error_str for x in ["CHAT_ADMIN_REQUIRED", "phone.CreateGroupCall", "GROUPCALL_FORBIDDEN", "GROUPCALL_CREATE_FORBIDDEN", "VOICE_MESSAGES_FORBIDDEN"]):
-                await self.stop(chat_id)
+                await self._stop_impl(chat_id)
                 if message:
                     try:
                         await message.edit_text(_lang["error_vc_disabled"])
                     except Exception:
                         pass
             elif "GROUPCALL_INVALID" in error_str or "GROUPCALL" in error_str:
-                await self.stop(chat_id)
+                await self._stop_impl(chat_id)
                 if message:
                     try:
                         await message.edit_text(_lang["error_no_call"])
@@ -415,16 +436,16 @@ class TgCall(PyTgCalls):
                         pass
             else:
                 logger.error(f"RPC error in play_media for {chat_id}: {e}")
-                await self.stop(chat_id)
+                await self._stop_impl(chat_id)
         except exceptions.NoAudioSourceFound:
             if message:
                 try:
                     await message.edit_text(_lang["error_no_audio"])
                 except Exception:
                     pass
-            await self.play_next(chat_id)
+            await self._play_next_impl(chat_id)
         except (ConnectionNotFound, TelegramServerError):
-            await self.stop(chat_id)
+            await self._stop_impl(chat_id)
             if message:
                 try:
                     await message.edit_text(_lang["error_tg_server"])
@@ -434,7 +455,7 @@ class TgCall(PyTgCalls):
             error_msg = str(e)
             logger.warning(
                 f"⏱️ Timeout joining voice chat {chat_id}: {error_msg}")
-            await self.stop(chat_id)
+            await self._stop_impl(chat_id)
             if message:
                 try:
                     await message.edit_text(
@@ -444,11 +465,11 @@ class TgCall(PyTgCalls):
                 except Exception:
                     pass
             await asyncio.sleep(2)
-            await self.play_next(chat_id)
+            await self._play_next_impl(chat_id)
         except Exception as e:
             logger.error(
                 f"Unexpected error in play_media for {chat_id}: {e}", exc_info=True)
-            await self.stop(chat_id)
+            await self._stop_impl(chat_id)
             if message:
                 try:
                     await message.edit_text(f"❌ Playback error: {str(e)[:100]}")
@@ -521,10 +542,7 @@ class TgCall(PyTgCalls):
             return False
 
     async def play_next(self, chat_id: int) -> None:
-        if chat_id not in self._play_next_locks:
-            self._play_next_locks[chat_id] = asyncio.Lock()
-
-        lock = self._play_next_locks[chat_id]
+        lock = self.get_lock(chat_id)
 
         if lock.locked():
             logger.info(
@@ -532,6 +550,9 @@ class TgCall(PyTgCalls):
             return
 
         async with lock:
+            await self._play_next_impl(chat_id)
+
+    async def _play_next_impl(self, chat_id: int) -> None:
             try:
                 if not await db.get_call(chat_id):
                     return
@@ -556,7 +577,7 @@ class TgCall(PyTgCalls):
                         _lang = await lang.get_lang(chat_id)
                         try:
                             msg = await app.send_message(chat_id=target_chat, text=_lang["play_again"])
-                            await self.play_media(chat_id, msg, media, message_chat_id=message_chat_id)
+                            await self._play_media_impl(chat_id, msg, media, message_chat_id=message_chat_id)
                         except errors.ChannelPrivate:
                             logger.warning(
                                 f"Bot removed from {chat_id}, cleaning up")
@@ -586,7 +607,7 @@ class TgCall(PyTgCalls):
                                     video=getattr(first_track, 'video', False),
                                 )
                             first_track.message_id = msg.id
-                            await self.play_media(chat_id, msg, first_track, message_chat_id=message_chat_id)
+                            await self._play_media_impl(chat_id, msg, first_track, message_chat_id=message_chat_id)
                         except errors.ChannelPrivate:
                             logger.warning(
                                 f"Bot removed from {chat_id}, cleaning up")
@@ -618,7 +639,7 @@ class TgCall(PyTgCalls):
                         except Exception as e:
                             logger.debug(
                                 f"Could not send auto_end message in {chat_id}: {e}")
-                    return await self.stop(chat_id)
+                    return await self._stop_impl(chat_id)
 
                 _lang = await lang.get_lang(chat_id)
                 msg = None
@@ -630,7 +651,7 @@ class TgCall(PyTgCalls):
                         video=getattr(media, 'video', False),
                     )
                     if not media.file_path:
-                        await self.stop(chat_id)
+                        await self._stop_impl(chat_id)
                         if msg:
                             try:
                                 await msg.edit_text(
@@ -660,11 +681,11 @@ class TgCall(PyTgCalls):
 
                 media.message_id = msg.id if msg else 0
                 if msg:
-                    await self.play_media(chat_id, msg, media, message_chat_id=message_chat_id)
+                    await self._play_media_impl(chat_id, msg, media, message_chat_id=message_chat_id)
                 else:
                     logger.info(
                         f"Playing next track for {chat_id} without message update")
-                    await self.play_media(chat_id, None, media, message_chat_id=message_chat_id)
+                    await self._play_media_impl(chat_id, None, media, message_chat_id=message_chat_id)
 
                 try:
                     asyncio.create_task(
@@ -676,7 +697,7 @@ class TgCall(PyTgCalls):
                 logger.error(
                     f"Error in play_next for {chat_id}: {e}", exc_info=True)
                 try:
-                    await self.stop(chat_id)
+                    await self._stop_impl(chat_id)
                 except Exception:
                     pass
 
@@ -704,7 +725,7 @@ class TgCall(PyTgCalls):
                             if current_time - t < 5.0
                         }
 
-                        await self.play_next(chat_id)
+                        await self._play_next_impl(chat_id)
                 elif isinstance(update, types.ChatUpdate):
                     if update.status in [
                         types.ChatUpdate.Status.KICKED,
