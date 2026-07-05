@@ -29,7 +29,7 @@ async def _help(_, m: types.Message):
             photo=config.START_IMG,  # Use same image as start command
             caption=m.lang["help_menu"],
             reply_markup=buttons.help_markup(m.lang),
-            quote=True,
+            quote=False,
         )
     except Exception:
         # Fallback to text if photo fails
@@ -86,14 +86,14 @@ async def start(_, message: types.Message):
             photo=config.START_IMG,
             caption=_text,
             reply_markup=key,
-            quote=not private,
+            quote=False,
         )
     except errors.ChatSendPhotosForbidden:
         # If photos are not allowed, send text only
         await message.reply_text(
             text=_text,
             reply_markup=key,
-            quote=not private,
+            quote=False,
         )
 
     # For private chats, add user to database if new

@@ -709,30 +709,35 @@ class TgCall(PyTgCalls):
         for client in self.clients:
             @client.on_update()
             async def update_handler(_, update: types.Update) -> None:
-                if isinstance(update, types.StreamEnded):
-                    if update.stream_type == types.StreamEnded.Type.AUDIO:
-                        chat_id = update.chat_id
-                        current_time = asyncio.get_event_loop().time()
+                try:
+                    if isinstance(update, types.StreamEnded):
+                        if update.stream_type == types.StreamEnded.Type.AUDIO:
+                            chat_id = update.chat_id
+                            current_time = asyncio.get_event_loop().time()
 
-                        if chat_id in self._stream_end_cache:
-                            if current_time - self._stream_end_cache[chat_id] < 2.0:
-                                return
+                            if chat_id in self._stream_end_cache:
+                                if current_time - self._stream_end_cache[chat_id] < 2.0:
+                                    return
 
-                        self._stream_end_cache[chat_id] = current_time
+                            self._stream_end_cache[chat_id] = current_time
 
-                        self._stream_end_cache = {
-                            cid: t for cid, t in self._stream_end_cache.items()
-                            if current_time - t < 5.0
-                        }
+                            self._stream_end_cache = {
+                                cid: t for cid, t in self._stream_end_cache.items()
+                                if current_time - t < 5.0
+                            }
 
-                        await self._play_next_impl(chat_id)
-                elif isinstance(update, types.ChatUpdate):
-                    if update.status in [
-                        types.ChatUpdate.Status.KICKED,
-                        types.ChatUpdate.Status.LEFT_GROUP,
-                        types.ChatUpdate.Status.CLOSED_VOICE_CHAT,
-                    ]:
-                        await self.stop(update.chat_id)
+                            await self._play_next_impl(chat_id)
+                    elif isinstance(update, types.ChatUpdate):
+                        if update.status in [
+                            types.ChatUpdate.Status.KICKED,
+                            types.ChatUpdate.Status.LEFT_GROUP,
+                            types.ChatUpdate.Status.CLOSED_VOICE_CHAT,
+                        ]:
+                            await self.stop(update.chat_id)
+                except (ConnectionNotFound, exceptions.NotInCallError, TelegramServerError):
+                    return
+                except Exception as e:
+                    logger.debug(f"Ignoring update handler error: {e}")
 
     async def boot(self) -> None:
         PyTgCallsSession.notice_displayed = True
