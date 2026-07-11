@@ -2,7 +2,7 @@
 
 <img src="https://i.ibb.co/cKzySsgr/yy.png" alt="Hasii Music" width="400"/>
 
-# 🎵 ˹ʜᴀꜱɪɪ ᴍᴜꜱɪᴄ˼
+# 🎵 ˹ʜᴀꜱɪɪ ꭙ ᴍᴜꜱɪᴄ˼
 
 ### A Modern Telegram Music Bot for High-Quality Voice Chat Streaming
 
