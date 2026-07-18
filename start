@@ -1,2 +1,4 @@
+# Start the web server in the background
+python3 server.py &
+# Start your actual bot
 python3 -m HasiiMusic
-
