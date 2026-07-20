@@ -67,7 +67,7 @@ class Config:
         # Auto-end stream when queue is empty
         self.AUTO_END: bool = self._str_to_bool(getenv("AUTO_END", "False"))
         # Auto-leave inactive chats
-        self.AUTO_LEAVE: bool = self._str_to_bool(getenv("AUTO_LEAVE", "True"))
+        self.AUTO_LEAVE: bool = self._str_to_bool(getenv("AUTO_LEAVE", "False"))
         # Enable/disable thumbnail generation (set False to use default thumb)
         self.THUMB_GEN: bool = self._str_to_bool(getenv("THUMB_GEN", "True"))
         # Enable/disable video playback commands (/vplay)
