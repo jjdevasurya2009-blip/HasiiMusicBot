@@ -192,7 +192,7 @@ class Inline:
                 [
                     self.ikb(
                         text=lang["source"],
-                        Url="https://t.me/Wtf_lifz",
+                        url="https://t.me/Wtf_lifz",
                     ),
                     self.ikb(text=lang["Owner"], url=config.OWNER_URL),
                 ]
