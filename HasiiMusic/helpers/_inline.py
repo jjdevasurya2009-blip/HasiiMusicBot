@@ -187,17 +187,18 @@ class Inline:
                 self.ikb(text=lang["channel"], url=config.SUPPORT_CHANNEL),
             ],
         ]
-        if private:
-            rows += [
+        If private:
+            Rows += [
                 [
-                    self.ikb(
-                        text=lang["source"],
-                        url="https://t.me/Wtf_lifz",
-                    )
-                    self.ikb(text=lang["Owner"], url=config.OWNER_URL),
+                    Self.ikb(
+                        Text=lang["source"],
+                        Url="https://t.me/Wtf_lifz",
+                    ), # <--- Added comma here
+                    Self.ikb(text=lang["Owner"], url=config.OWNER_URL),
                 ]
             ]
-        return self.ikm(rows)
+        Return self.ikm(rows)
+        
 
     def yt_key(self, link: str) -> types.InlineKeyboardMarkup:
         return self.ikm(
