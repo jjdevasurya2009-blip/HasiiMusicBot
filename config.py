@@ -58,6 +58,7 @@ class Config:
         self.SUPPORT_CHANNEL: str = getenv(
             "SUPPORT_CHANNEL", "https://t.me/Anisaga_network")
         self.SUPPORT_CHAT: str = getenv("SUPPORT_CHAT", "https://t.me/animesintamilz")
+        self.OWNER_URL: str = getenv("OWNER_URL", "https://t.me/Wtf_lifz")
 
         # ============ EXCLUDED CHATS ============
         # Parse comma-separated chat IDs that assistants should never leave
