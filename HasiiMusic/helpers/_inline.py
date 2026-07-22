@@ -194,6 +194,7 @@ class Inline:
                         text=lang["source"],
                         url="https://t.me/Wtf_lifz",
                     )
+                    self.ikb(text=lang["Owner"], url=config.OWNER_URL),
                 ]
             ]
         return self.ikm(rows)
