@@ -88,27 +88,27 @@ class Inline:
             # Help menu with categorized buttons (3 per row)
             rows = [
                 [
-                    self.ikb(text="ᴀᴅᴍɪɴꜱ", callback_data="help_admins"),
-                    self.ikb(text="ᴀᴜᴛʜ", callback_data="help_auth"),
-                    self.ikb(text="ʙʀᴏᴀᴅᴄᴀꜱᴛ", callback_data="help_broadcast"),
+                    self.ikb(text="⬥ᴀᴅᴍɪɴꜱ⬥", callback_data="help_admins"),
+                    self.ikb(text="⬥ᴀᴜᴛʜ⬥", callback_data="help_auth"),
+                    self.ikb(text="⬥ʙʀᴏᴀᴅᴄᴀꜱᴛ⬥", callback_data="help_broadcast"),
                 ],
                 [
-                    self.ikb(text="ʟᴏᴏᴘ", callback_data="help_loop"),
-                    self.ikb(text="ᴘʟᴀʏ", callback_data="help_play"),
-                    self.ikb(text="ǫᴜᴇᴜᴇ", callback_data="help_queue"),
+                    self.ikb(text="⬥ʟᴏᴏᴘ⬥", callback_data="help_loop"),
+                    self.ikb(text="⬥ᴘʟᴀʏ⬥", callback_data="help_play"),
+                    self.ikb(text="⬥ǫᴜᴇᴜᴇ⬥", callback_data="help_queue"),
                 ],
                 [
-                    self.ikb(text="ʙʟ-ᴄʜᴀᴛ", callback_data="help_blchat"),
-                    self.ikb(text="ʙʟ-ᴜꜱᴇʀ", callback_data="help_bluser"),
-                    self.ikb(text="ꜱᴇᴇᴋ", callback_data="help_seek"),
+                    self.ikb(text="⬥ʙʟ-ᴄʜᴀᴛ⬥", callback_data="help_blchat"),
+                    self.ikb(text="⬥ʙʟ-ᴜꜱᴇʀ⬥", callback_data="help_bluser"),
+                    self.ikb(text="⬥ꜱᴇᴇᴋ⬥", callback_data="help_seek"),
                 ],
                 [
-                    self.ikb(text="ᴘɪɴɢ", callback_data="help_ping"),
-                    self.ikb(text="ꜱᴛᴀᴛꜱ", callback_data="help_stats"),
-                    self.ikb(text="ꜱᴜᴅᴏ", callback_data="help_sudo"),
+                    self.ikb(text="⬥ᴘɪɴɢ⬥", callback_data="help_ping"),
+                    self.ikb(text="⬥ꜱᴛᴀᴛꜱ⬥", callback_data="help_stats"),
+                    self.ikb(text="⬥ꜱᴜᴅᴏ⬥", callback_data="help_sudo"),
                 ],
                 [
-                    self.ikb(text="ʙᴀᴄᴋ", callback_data="start"),
+                    self.ikb(text="⬥ʙᴀᴄᴋ⬥", callback_data="start"),
                 ]
             ]
         return self.ikm(rows)
