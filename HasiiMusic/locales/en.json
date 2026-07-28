@@ -88,7 +88,7 @@
   "play_next": "<blockquote>ʜᴏʟᴅ ᴏɴ...ᴅᴏᴡɴʟᴏᴀᴅɪɴɢ ɴᴇxᴛ ᴍᴇᴅɪᴀ ꜰʀᴏᴍ ᴛʜᴇ ǫᴜᴇᴜᴇ.</blockquote>",
   "play_invite": "<blockquote>ʜᴏʟᴅ ᴏɴ ᴀ ᴍᴏᴍᴇɴᴛ...\nɪɴᴠɪᴛɪɴɢ {0} ᴀꜱꜱɪꜱᴛᴀɴᴛ ᴛᴏ ʏᴏᴜʀ ᴄʜᴀᴛ.</blockquote>",
   "play_emoji": "🪄",
-  "play_searching": "{0}",
+  "play_searching": "🔍",
   "play_paused": "<blockquote><b>ꜱᴛʀᴇᴀᴍ ᴘᴀᴜꜱᴇᴅ ʙʏ</b> {0}</blockquote>",
   "play_resumed": "<blockquote><b>ꜱᴛʀᴇᴀᴍ ʀᴇꜱᴜᴍᴇᴅ ʙʏ</b> {0}</blockquote>",
   "play_replayed": "<blockquote><b>ꜱᴛʀᴇᴀᴍ ʀᴇᴘʟᴀʏᴇᴅ ʙʏ</b> {0}</blockquote>",
